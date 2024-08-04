@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In</title>
+    <link rel="stylesheet" href="/styles/styles.css">
+</head>
+<body class="bg-gradient-to-r from-purple-600 to-blue-500 min-h-screen flex items-center justify-center p-4 overflow-hidden">
+
+    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 space-y-6">
+        <h1 class="text-3xl font-bold text-center text-gray-800">Sign In</h1>
+        <form action="/auth/signin" method="post" class="space-y-6">
+            <div>
+                <label for="userName" class="block text-sm font-medium text-gray-700">User Name</label>
+                <input type="text" name = "userName" id="userName" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter your username">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" name = "password" id="password" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter your password">
+            </div>
+            <button type="submit" class="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">Sign In</button>
+        </form>
+        <p class="text-center text-sm text-gray-600">Don't have an account? <a href="/auth/signup" class="text-indigo-600 hover:text-indigo-700 font-medium">Sign up</a></p>
+    </div>
+
+</body>
+</html>

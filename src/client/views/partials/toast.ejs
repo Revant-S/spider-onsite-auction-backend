@@ -1,0 +1,13 @@
+<% if (locals.toastRequired) { %>
+    <div class="flex flex-col w-fit absolute right-5 top-10 animate-moveInOut">
+        <div class="flex items-center p-4 bg-white text-black rounded-lg shadow-lg space-x-4">
+            <div id="image" class="flex-shrink-0">
+                <img src="/assets/<%= locals.svg %>.svg" class="w-8 h-8 object-contain" alt="Toast Icon">
+            </div>
+            <div id="message">
+                <%= locals.toastInfo.message %>
+            </div>
+        </div>
+    </div>
+    <div class="w-full h-4 bg-red-700 animate-bar rounded-lg"></div>
+<% } %>

@@ -6,14 +6,15 @@
     <title>Sign In</title>
     <link rel="stylesheet" href="/styles/styles.css">
 </head>
-<body class="bg-gradient-to-r from-purple-600 to-blue-500 min-h-screen flex items-center justify-center p-4 overflow-hidden">
 
-    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 space-y-6">
+<body class="relative h-screen w-screen bg-gradient-to-r from-blue-500 to-purple-600 overflow-hidden">
+    <%- include("./partials/toast.ejs") %>
+    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 space-y-6 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
         <h1 class="text-3xl font-bold text-center text-gray-800">Sign In</h1>
         <form action="/auth/signin" method="post" class="space-y-6">
             <div>
-                <label for="userName" class="block text-sm font-medium text-gray-700">User Name</label>
-                <input type="text" name = "userName" id="userName" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter your username">
+                <label for="userName" class="block text-sm font-medium text-gray-700">Email </label>
+                <input type="email" name = "email" id="userName" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter your Email">
             </div>
             <div>
                 <label for="password" class="block text-sm font-medium text-gray-700">Password</label>

@@ -5,14 +5,15 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon ./src/server/index.ts",
-    "build:css" : "npx tailwindcss -i ./src/client/styles/src/styles.css -o ./public/styles/styles.css --watch"
+    "build:css": "npx tailwindcss -i ./src/client/styles/src/styles.css -o ./public/styles/styles.css --watch",
+    "build:scripts": "npx webpack --config webpack.config.js",
+    "build:client": "npm run build:scripts && npm run build:css"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@types/morgan": "^1.9.9",
     "axios": "^1.7.3",
     "bcrypt": "^5.1.1",
     "config": "^3.3.12",
@@ -36,10 +37,14 @@
     "@types/express": "^4.17.21",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/mongoose": "^5.11.97",
+    "@types/morgan": "^1.9.9",
     "@types/node": "^22.1.0",
     "nodemon": "^3.1.4",
     "tailwindcss": "^3.4.7",
+    "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "webpack": "^5.93.0",
+    "webpack-cli": "^5.1.4"
   }
 }

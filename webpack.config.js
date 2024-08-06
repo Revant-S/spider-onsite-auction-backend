@@ -7,7 +7,7 @@ module.exports = {
   },
   output: {
     filename: "[name].bundle.js",
-    path: path.resolve("./dist/client/scripts/bundles"),
+    path: path.resolve("./public/dist/client/scripts/bundles"),
   },
   module: {
     rules: [

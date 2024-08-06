@@ -10,14 +10,19 @@ import authRouters from "./routes/authRoutes"
 const app = express();
 const startupDebugger = debug("app:startup");
 const dbDebugger = debug("app:dbDebugger")
+if (app.get("env") === "development") {
+    app.use(morgan("dev"));
+    startupDebugger("DEVELOPMENT ENVIRONEMNT ....\nMORGAN ACTIVE...")
+}
+
 
 
 app.set("view engine" , "ejs");
 app.set('views', path.resolve(__dirname, '../client/views'));
 app.use(cookieParser("token"))
-app.use(express.static((path.join(__dirname, '../../public'))));
-// app.use(express.static(path.join(__dirname, '../../public')));
-// console.log((path.join(__dirname, '../../public')));
+app.use("/public" , express.static(path.resolve("./public")));
+console.log(path.resolve("./public"));
+
 
 
 
@@ -26,10 +31,7 @@ app.use(express.urlencoded({ extended: true }))
 
 
 app.use("/auth",authRouters)
-if (app.get("env") === "development") {
-    app.use(morgan("dev"));
-    startupDebugger("DEVELOPMENT ENVIRONEMNT ....\nMORGAN ACTIVE...")
-}
+
 
 
 const connectToDb = async () => {

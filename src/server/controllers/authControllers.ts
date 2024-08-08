@@ -1,10 +1,11 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { valiadteUserBody } from "../../validation/userValidation";
 import User from "../models/userModal";
 import debug from "debug";
 import { ToastMessage } from "../../types/toastmessage";
 import { MongooseError } from "mongoose";
 import bcrypt from "bcrypt"
+
 export const errorDegugger = debug("app:errorDegugger")
 
 const authControllerDebug = debug("app:authControllerDebugger")
@@ -19,16 +20,16 @@ export const getSigninPage = (req: Request, res: Response) => res.render("signin
 
 export const getSignupPage = (req: Request, res: Response) => res.render("signup");
 
-export const signup = async (req: Request, res: Response) => {
+export const signup = async (req: Request, res: Response, next: NextFunction) => {
     const userBody = req.body;
-    authControllerDebug(userBody)
-    authControllerDebug("HERE")
+    authControllerDebug(userBody);
     const validate = valiadteUserBody(userBody);
     authControllerDebug(validate)
     if (!validate.success) return res.render("signup", { toastRequried: true, toastInfo: { message: "BAD REQUEST" } });
     try {
         const newUser = await User.create(validate.data);
         const token = newUser.getAuthToken();
+   
         return res.cookie("token", token, {
             httpOnly: true,
             maxAge: 3600000
@@ -36,7 +37,7 @@ export const signup = async (req: Request, res: Response) => {
             user: newUser
         })
     } catch (error: any) {
-        errorDegugger(error.message)
+
         if ((error as MongooseError).message.includes("E11000 duplicate key error collection")) {
             return redirectToSignin(res, {
                 toastRequired: true,
@@ -46,18 +47,12 @@ export const signup = async (req: Request, res: Response) => {
                 svg: "warning"
             }, false)
         }
-        redirectToSignin(res, {
-            toastRequired: true,
-            toastInfo: {
-                message: "SomeThing Went Wrong"
-            },
-            svg: "cross"
-        }, false)
+        next(error);
     }
 }
 
 
-export const signin = async (req: Request, res: Response) => {
+export const signin = async (req: Request, res: Response, next : NextFunction) => {
     const userBody = req.body;
     const validate = valiadteUserBody(userBody);
     authControllerDebug("User Signed in ")
@@ -88,12 +83,14 @@ export const signin = async (req: Request, res: Response) => {
 
     } catch (error: any) {
         errorDegugger(error.message)
-        redirectToSignin(res, {
-            toastRequired: true,
-            toastInfo: {
-                message: "SomeThing Went Wrong"
-            },
-            svg: "cross"
-        }, true)
+        // redirectToSignin(res, {
+        //     toastRequired: true,
+        //     toastInfo: {
+        //         message: "SomeThing Went Wrong"
+        //     },
+        //     svg: "cross"
+        // }, true)
+        next()
+        
     }
 }

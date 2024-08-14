@@ -96,7 +96,6 @@ const SOCKET_PORT = 5000
 
 
 export function startsocketServer() {
-
     server.listen(SOCKET_PORT, () => {
         socketDebugger(`WebSocket server is running on port ${SOCKET_PORT}`);
     });

@@ -4,7 +4,8 @@ import { Model } from "mongoose";
 
 export interface UserSchema extends z.infer<typeof userSchema> {
     accountActivated : 0|1,
-    passcode : string
+    passcode : string,
+  
  }
 
 

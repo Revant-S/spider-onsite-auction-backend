@@ -4,10 +4,12 @@ import config from "config"
 import express from "express"
 import mongoose from "mongoose"
 import morgan from "morgan";
-
+import { verifyUser } from './middlewares/authMiddlewares';
 import cookieParser from 'cookie-parser';
 import authRouters from "./routes/authRoutes"
+import itemRouters from "./routes/itemRoutes"
 import { errorDegugger } from './controllers/authControllers';
+import auctionRoutes from "./routes/auctionRoutes"
 const app = express();
 const startupDebugger = debug("app:startup");
 const dbDebugger = debug("app:dbDebugger")
@@ -23,6 +25,8 @@ app.use(cookieParser("token"))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use("/auth", authRouters)
+app.use("/items", verifyUser,itemRouters)
+app.use("/auction", verifyUser , auctionRoutes)
 const connectToDb = async () => {
     try {
         await mongoose.connect(config.get("mongoDbConnectionURL"));

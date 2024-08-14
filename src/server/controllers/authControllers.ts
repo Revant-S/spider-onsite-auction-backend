@@ -18,25 +18,25 @@ export function generateRandomString(length: number) {
 }
 
 
-export const verifyAccount = async (req: Request, res: Response, next : NextFunction) => {
+export const verifyAccount = async (req: Request, res: Response, next: NextFunction) => {
     const { email, passcode } = req.body;
     try {
-        const user = await User.findOne({email});
-        if(!user) return res.send("User Not Found");
+        const user = await User.findOne({ email });
+        if (!user) return res.send("User Not Found");
         const passcodeVerified = (user.passcode === passcode);
-        if(!passcodeVerified) return res.json({
-            message : "Passcode is incorrect"
+        if (!passcodeVerified) return res.json({
+            message: "Passcode is incorrect"
         })
         authControllerDebug("User Verified!!")
         user.accountActivated = 1;
         await user.save();
         return res.json({
-            message : "User Verified Sucessfully"
+            message: "User Verified Sucessfully"
         })
     } catch (error) {
         errorDegugger("Something Went Wrong")
         next()
-        return 
+        return
     }
 
 
@@ -53,7 +53,7 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
     try {
         const newUser = await User.create(validate.data);
         const passCodeGenerated = generateRandomString(10);
-        await sendEmail(newUser.email,passCodeGenerated );
+        await sendEmail(newUser.email, passCodeGenerated);
         newUser.passcode = passCodeGenerated;
         await newUser.save();
         return res.send({
@@ -71,7 +71,7 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
 export const signin = async (req: Request, res: Response, next: NextFunction) => {
     const userBody = req.body;
     const validate = valiadteUserBody(userBody);
-    
+
     if (!validate.success) return res.json({
         message: "Bad Request"
     })
@@ -82,7 +82,8 @@ export const signin = async (req: Request, res: Response, next: NextFunction) =>
         authControllerDebug(valid)
         if (user.accountActivated === 0) return res.json({ message: "Please Verify your Account" })
         const authToken = user.getAuthToken();
-        return res.cookie("token", authToken, { httpOnly: true, maxAge: 36000 }).json({
+        console.log(authToken);
+        return res.cookie("token", authToken, { httpOnly: true, maxAge: 60*60*1000*24 }).json({
             message: "User LoggedIn Sucessfully"
         })
 

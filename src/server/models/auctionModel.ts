@@ -56,6 +56,10 @@ const auctionSchema = new mongoose.Schema<AuctionSchema, AuctionModel>({
     finalPrice: {
         type: Number,
         min: 0
+    },
+    roomId : {
+        type : String,
+        default : ""
     }
 });
 

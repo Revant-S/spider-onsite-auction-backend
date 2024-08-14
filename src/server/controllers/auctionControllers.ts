@@ -26,6 +26,22 @@ export const createAuction = async (req: Request, res: Response, next: NextFunct
             endTime
 
         })
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         return res.json({ newAuction })
     } catch (error: any) {
         errorDegugger(error.message)

@@ -4,7 +4,7 @@ import config from "config"
 import express from "express"
 import mongoose from "mongoose"
 import morgan from "morgan";
-import path from 'path';
+
 import cookieParser from 'cookie-parser';
 import authRouters from "./routes/authRoutes"
 import { errorDegugger } from './controllers/authControllers';
@@ -18,23 +18,11 @@ if (app.get("env") === "development") {
 
 
 
-app.set("view engine", "ejs");
-app.set('views', path.resolve(__dirname, '../client/views'));
 app.use(cookieParser("token"))
-app.use("/public", express.static(path.resolve("./public")));
-console.log(path.resolve("./public"));
-
-
-
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-
-
 app.use("/auth", authRouters)
-
-
-
 const connectToDb = async () => {
     try {
         await mongoose.connect(config.get("mongoDbConnectionURL"));
@@ -46,17 +34,16 @@ const connectToDb = async () => {
 }
 
 connectToDb();
-
-
-
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
     errorDegugger(err.message);
     errorDegugger(err.stack);
-    res.status(500).render("404");
+    res.status(500).json({
+        message : "Something Went Wrong"
+    });
 });
 
 app.get("/test", (req: express.Request, res: express.Response) => {
-    res.render("Everything_is_Fine")
+    res.send("Ok")
 })
 
-const PORT = 8000;
+const PORT = config.get("AppPort");

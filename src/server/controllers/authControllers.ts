@@ -2,95 +2,93 @@ import { NextFunction, Request, Response } from "express";
 import { valiadteUserBody } from "../../validation/userValidation";
 import User from "../models/userModal";
 import debug from "debug";
-import { ToastMessage } from "../../types/toastmessage";
-import { MongooseError } from "mongoose";
 import bcrypt from "bcrypt"
-
+import { sendEmail } from "../../services/mailService";
+import crypto from "crypto"
 export const errorDegugger = debug("app:errorDegugger")
-
 const authControllerDebug = debug("app:authControllerDebugger")
 
-export const redirectToSignin = (res: Response, message: ToastMessage, toStgnin: boolean) => {
-    if (toStgnin) return res.status(404).render("signin", message);
-    res.status(404).render("signup", message)
+
+
+export function generateRandomString(length: number) {
+    const bytesNeeded = Math.ceil(length / 2);
+    const randomBytes = crypto.randomBytes(bytesNeeded);
+    const hexString = randomBytes.toString('hex');
+    return hexString.slice(0, length);
 }
 
 
-export const getSigninPage = (req: Request, res: Response) => res.render("signin");
+export const verifyAccount = async (req: Request, res: Response, next : NextFunction) => {
+    const { email, passcode } = req.body;
+    try {
+        const user = await User.findOne({email});
+        if(!user) return res.send("User Not Found");
+        const passcodeVerified = (user.passcode === passcode);
+        if(!passcodeVerified) return res.json({
+            message : "Passcode is incorrect"
+        })
+        authControllerDebug("User Verified!!")
+        user.accountActivated = 1;
+        await user.save();
+        return res.json({
+            message : "User Verified Sucessfully"
+        })
+    } catch (error) {
+        errorDegugger("Something Went Wrong")
+        next()
+        return 
+    }
 
-export const getSignupPage = (req: Request, res: Response) => res.render("signup");
+
+}
 
 export const signup = async (req: Request, res: Response, next: NextFunction) => {
     const userBody = req.body;
     authControllerDebug(userBody);
     const validate = valiadteUserBody(userBody);
     authControllerDebug(validate)
-    if (!validate.success) return res.render("signup", { toastRequried: true, toastInfo: { message: "BAD REQUEST" } });
+    if (!validate.success) return res.json({
+        messgae: "Bad Request"
+    })
     try {
         const newUser = await User.create(validate.data);
-        const token = newUser.getAuthToken();
-   
-        return res.cookie("token", token, {
-            httpOnly: true,
-            maxAge: 3600000
-        }).render("home", {
-            user: newUser
+        const passCodeGenerated = generateRandomString(10);
+        await sendEmail(newUser.email,passCodeGenerated );
+        newUser.passcode = passCodeGenerated;
+        await newUser.save();
+        return res.send({
+            message: "User Created Sucessfullly Please Verify Your Account By Visiting the Link in your email",
         })
     } catch (error: any) {
-
-        if ((error as MongooseError).message.includes("E11000 duplicate key error collection")) {
-            return redirectToSignin(res, {
-                toastRequired: true,
-                toastInfo: {
-                    message: "User Already Registered"
-                },
-                svg: "warning"
-            }, false)
-        }
-        next(error);
+        errorDegugger(error.message)
+        return res.json({
+            message: "User Already exists"
+        })
     }
 }
 
 
-export const signin = async (req: Request, res: Response, next : NextFunction) => {
+export const signin = async (req: Request, res: Response, next: NextFunction) => {
     const userBody = req.body;
     const validate = valiadteUserBody(userBody);
-    authControllerDebug("User Signed in ")
-    if (!validate.success) return res.render("signin", { toastRequried: true, toastInfo: { message: "BAD REQUEST" } });
+    
+    if (!validate.success) return res.json({
+        message: "Bad Request"
+    })
     try {
         const user = await User.findOne({ email: userBody.email })
-        if (!user) {
-            return redirectToSignin(res, {
-                toastRequired: true,
-                toastInfo: {
-                    message: "Username or password is incorrect"
-                },
-                svg: "cross"
-            }, true)
-        }
+        if (!user) return res.send("Sorry Bro")
         const valid = await bcrypt.compare(userBody.password, user.password);
         authControllerDebug(valid)
-        if (!valid) return redirectToSignin(res, {
-            toastRequired: true,
-            toastInfo: {
-                message: "Invalid Email or password",
-            },
-            svg: "cross"
-        }, true)
-
+        if (user.accountActivated === 0) return res.json({ message: "Please Verify your Account" })
         const authToken = user.getAuthToken();
-        res.cookie("token", authToken, { httpOnly: true, maxAge: 36000 }).redirect("/home")
+        return res.cookie("token", authToken, { httpOnly: true, maxAge: 36000 }).json({
+            message: "User LoggedIn Sucessfully"
+        })
 
     } catch (error: any) {
         errorDegugger(error.message)
-        // redirectToSignin(res, {
-        //     toastRequired: true,
-        //     toastInfo: {
-        //         message: "SomeThing Went Wrong"
-        //     },
-        //     svg: "cross"
-        // }, true)
         next()
-        
+        return;
     }
 }

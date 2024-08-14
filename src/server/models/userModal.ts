@@ -22,6 +22,14 @@ const userSchema = new mongoose.Schema<UserSchema, UserModel , UserMethods>({
         type : String,
         min : 6,
         required : true
+    },
+    accountActivated : {
+        type : Number,
+        enum : [0,1],
+        default : 0
+    },
+    passcode : {
+        type : String,
     }
 })
 userSchema.pre("save", async function(){

@@ -1,5 +1,6 @@
 {
     "mongoDbConnectionURL" : "monkeyType_mongoDbConnectionUrl",
-    "AppPort" : "monkeyTypePort",
-    "JWT_SECRET_KEY" : "JWT_SECRET_KEY"
+    "AppPort" : "AppPort",
+    "JWT_SECRET_KEY" : "JWT_SECRET_KEY",
+    "App_Mail_Password" : "App_Mail_Password"
 }

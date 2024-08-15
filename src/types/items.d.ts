@@ -7,11 +7,11 @@ export interface ItemSchema extends z.infer<typeof itemSchema> {
     createdAt?: Date;
     updatedAt?: Date;
     owner : Types.ObjectId,
-    buyers : Types.ObjectId[]
+    buyers : Types.ObjectId[],
+    rating : number
 }
 
 export interface ItemMethods {
-
 }
 
 export type ItemModel = Model<ItemSchema, {}, ItemMethods>;

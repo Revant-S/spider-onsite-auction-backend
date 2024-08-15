@@ -83,22 +83,21 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on("joinAuction", async (data: string | { auctionId: string, userId : string }) => {
+    socket.on("joinAuction", async (data: string | { auctionId: string, userId: string }) => {
         try {
             let auctionId: string;
-            let auctionUserDetails: {
-                auctionId : string,
-                userId : string
-            }
+            let auctionUserDetails: { auctionId: string, userId: string };
             if (typeof data === 'string') {
                 auctionId = JSON.parse(data).auctionId;
-                auctionUserDetails = JSON.parse(data)
+                auctionUserDetails = JSON.parse(data);
             } else {
-                auctionId = data.auctionId
-                    auctionUserDetails = data
+                auctionId = data.auctionId;
+                auctionUserDetails = data;
             }
-            const user = await User.findById(auctionUserDetails.userId)
-            if(!user) return socket.to(socket.id).emit("User Not Found")
+            const user = await User.findById(auctionUserDetails.userId);
+            if (!user) {
+                return socket.emit('error', { message: 'User Not Found' });
+            }
             const auction = await Auction.findById(auctionId)
                 .populate('item')
                 .populate('currentHighestBidder', 'username')
@@ -120,7 +119,6 @@ io.on('connection', (socket) => {
                     name: auction.item.name,
                     description: auction.item.description,
                     startingPrice: auction.item.startingPrice,
-
                 },
                 startTime: auction.startTime,
                 endTime: auction.endTime,
@@ -132,7 +130,6 @@ io.on('connection', (socket) => {
                     amount: bid.amount,
                     time: bid.time
                 })),
-
             };
 
             socket.emit('auctionJoined', {
@@ -151,17 +148,18 @@ io.on('connection', (socket) => {
 
     socket.on("placeBid", async (data: { auctionId: string, bidAmount: number, userId: string }) => {
         try {
+ 
+            if (typeof(data)=== "string") {
+                data = JSON.parse(data)
+            }
             const { auctionId, bidAmount, userId } = data;
-
             const auction = await Auction.findById(auctionId);
             if (!auction) {
-                socket.to(socket.id).emit('error', { message: 'Auction not found' });
-                return;
+                return socket.emit('error', { message: 'Auction not found' });
             }
 
             if (bidAmount <= auction.currentPrice) {
-                socket.to(socket.id).emit('error', { message: 'Bid amount must be higher than current price' });
-                return;
+                return socket.emit('error', { message: 'Bid amount must be higher than current price' });
             }
 
             auction.currentPrice = bidAmount;
@@ -180,13 +178,25 @@ io.on('connection', (socket) => {
                 bidder: userId,
                 time: new Date()
             });
-
+            return 
         } catch (error) {
             console.error('Error in placeBid:', error);
             errorDegugger(error instanceof Error ? error.message : 'Unknown error');
             socket.emit('error', { message: 'An error occurred while placing the bid' });
+            return 
         }
     });
+
+    const checkAuctionEnd = async () => {
+        const auctions = await Auction.find({ endTime: { $lte: new Date() }, status: 'active' });
+        for (const auction of auctions) {
+            auction.status = 'ended';
+            await auction.save();
+            io.to(auction.roomId).emit('auctionEnded', { message: 'The auction has ended', auctionId: auction._id });
+        }
+    };
+
+    setInterval(checkAuctionEnd, 60 * 1000);
 
     socket.on('disconnect', (reason: string) => {
         socketDebugger(`User disconnected. Reason: ${reason}`);
@@ -195,7 +205,7 @@ io.on('connection', (socket) => {
     socket.emit('welcome', 'Welcome to the Web Socket server!');
 });
 
-const SOCKET_PORT = 5000
+const SOCKET_PORT = 5000;
 
 export function startsocketServer() {
     server.listen(SOCKET_PORT, () => {

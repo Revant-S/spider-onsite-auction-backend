@@ -24,7 +24,7 @@ const itemSchema = new mongoose.Schema<ItemSchema, ItemModel>({
     auctionDuration: {
         type: Number,
         required: true,
-        min: 1,//in hours
+        min: 1,
     },
     category: {
         type: String,
@@ -35,8 +35,25 @@ const itemSchema = new mongoose.Schema<ItemSchema, ItemModel>({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: true,
+    },
+    rating : {
+        type : Number,
+        min : 0,
+        max : 10,
+        default : 0
     }
 });
+
+itemSchema.methods.addRating = async function (newRating: number) {
+    if (newRating < 0 || newRating > 10) {
+        throw new Error('Rating must be between 0 and 10');
+    }
+    this.totalRatings += newRating;
+    this.ratingCount += 1;
+    this.rating = this.totalRatings / this.ratingCount;
+    this.ratings.push(newRating);
+    await this.save();
+};
 
 const Item = mongoose.model<ItemSchema, ItemModel>("Item", itemSchema);
 

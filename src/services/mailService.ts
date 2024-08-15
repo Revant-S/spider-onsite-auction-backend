@@ -13,7 +13,7 @@ export const sendEmail = async (email: string, code: string) => {
             pass: config.get("App_Mail_Password")
         }
     })
-    //Email
+    
     const mailOptions = {
         from: "bookHub.com",
         to: email,

@@ -2,7 +2,6 @@ import { Server as SocketIOServer } from 'socket.io';
 import express from 'express';
 import http from 'http';
 import debug from 'debug';
-// import config from 'config';
 import Item from '../models/itemsModel';
 import Auction from '../models/auctionModel';
 import { errorDegugger } from '../controllers/authControllers';
@@ -37,8 +36,6 @@ io.on('connection', (socket) => {
                 data = rawData;
             }
 
-
-            socketDebugger(data.userId)
             const user = await User.findById(data.userId);
             if (!user) {
                 socket.emit('error', { message: 'User Not Found' });
@@ -65,7 +62,9 @@ io.on('connection', (socket) => {
             const newAuction = await Auction.create({
                 item: itemid,
                 currentPrice,
-                endTime
+                endTime,
+                startTime,
+                status: 'active'
             });
 
             const roomName = `auction-${newAuction._id}`;
@@ -77,11 +76,115 @@ io.on('connection', (socket) => {
 
             socket.emit('auctionCreated', { auction: newAuction, room: roomName });
             io.emit('auctionCreated', { auction: newAuction, room: roomName });
-
         } catch (error) {
             console.error('Error in createAuction:', error);
             errorDegugger(error instanceof Error ? error.message : 'Unknown error');
             socket.emit('error', { message: 'An error occurred while creating the auction' });
+        }
+    });
+
+    socket.on("joinAuction", async (data: string | { auctionId: string, userId : string }) => {
+        try {
+            let auctionId: string;
+            let auctionUserDetails: {
+                auctionId : string,
+                userId : string
+            }
+            if (typeof data === 'string') {
+                auctionId = JSON.parse(data).auctionId;
+                auctionUserDetails = JSON.parse(data)
+            } else {
+                auctionId = data.auctionId
+                    auctionUserDetails = data
+            }
+            const user = await User.findById(auctionUserDetails.userId)
+            if(!user) return socket.to(socket.id).emit("User Not Found")
+            const auction = await Auction.findById(auctionId)
+                .populate('item')
+                .populate('currentHighestBidder', 'username')
+                .populate('bids.bidder', 'username');
+
+            if (!auction) {
+                socket.emit('error', { message: 'Auction not found' });
+                return;
+            }
+
+            const roomName = `auction-${auctionId}`;
+            socket.join(roomName);
+            socketDebugger(`Socket ${socket.id} joined auction room ${roomName}`);
+
+            const auctionDetails = {
+                _id: auction._id,
+                item: {
+                    _id: auction.item._id,
+                    name: auction.item.name,
+                    description: auction.item.description,
+                    startingPrice: auction.item.startingPrice,
+
+                },
+                startTime: auction.startTime,
+                endTime: auction.endTime,
+                currentPrice: auction.currentPrice,
+                currentHighestBidder: auction.currentHighestBidder ? auction.currentHighestBidder.username : null,
+                status: auction.status,
+                bids: auction.bids.map((bid: any) => ({
+                    bidder: bid.bidder.username,
+                    amount: bid.amount,
+                    time: bid.time
+                })),
+
+            };
+
+            socket.emit('auctionJoined', {
+                message: 'You have successfully joined the auction',
+                auctionDetails: auctionDetails
+            });
+
+            return socket.to(roomName).emit('userJoined', { message: 'A new user has joined the auction' });
+
+        } catch (error) {
+            console.error('Error in joinAuction:', error);
+            errorDegugger(error instanceof Error ? error.message : 'Unknown error');
+            return socket.emit('error', { message: 'An error occurred while joining the auction' });
+        }
+    });
+
+    socket.on("placeBid", async (data: { auctionId: string, bidAmount: number, userId: string }) => {
+        try {
+            const { auctionId, bidAmount, userId } = data;
+
+            const auction = await Auction.findById(auctionId);
+            if (!auction) {
+                socket.to(socket.id).emit('error', { message: 'Auction not found' });
+                return;
+            }
+
+            if (bidAmount <= auction.currentPrice) {
+                socket.to(socket.id).emit('error', { message: 'Bid amount must be higher than current price' });
+                return;
+            }
+
+            auction.currentPrice = bidAmount;
+            auction.currentHighestBidder = userId;
+            auction.bids.push({
+                bidder: userId,
+                amount: bidAmount,
+                time: new Date()
+            });
+
+            await auction.save();
+
+            const roomName = `auction-${auctionId}`;
+            io.to(roomName).emit('newBid', {
+                newPrice: bidAmount,
+                bidder: userId,
+                time: new Date()
+            });
+
+        } catch (error) {
+            console.error('Error in placeBid:', error);
+            errorDegugger(error instanceof Error ? error.message : 'Unknown error');
+            socket.emit('error', { message: 'An error occurred while placing the bid' });
         }
     });
 
@@ -93,7 +196,6 @@ io.on('connection', (socket) => {
 });
 
 const SOCKET_PORT = 5000
-
 
 export function startsocketServer() {
     server.listen(SOCKET_PORT, () => {
